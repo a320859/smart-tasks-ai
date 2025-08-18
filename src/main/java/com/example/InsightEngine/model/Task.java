@@ -1,13 +1,23 @@
 package com.example.InsightEngine.model;
 
+import jakarta.persistence.*;
+
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "tasks")
 public class Task {
-    private String user;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int taskId;
     private String name;
     private String content;
     private Timestamp createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private String user;
 
     public String getUser() {
         return user;
