@@ -17,13 +17,18 @@ public class Task {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private String user;
+    private User user;
 
-    public String getUser() {
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = new Timestamp(System.currentTimeMillis());
+    }
+
+    public User getUser() {
         return user;
     }
 
-    public void setUser(String user) {
+    public void setUser(User user) {
         this.user = user;
     }
 
