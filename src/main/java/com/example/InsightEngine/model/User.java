@@ -12,9 +12,6 @@ public class User {
     private int userId;
     private String username;
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Task> tasks;
-
     public int getUserId() {
         return userId;
     }
@@ -30,12 +27,4 @@ public class User {
     public void setUsername(String username) {
         this.username = username;
     }
-
-//    public List<Task> getTasks() {
-//        return tasks;
-//    }
-//
-//    public void setTasks(List<Task> tasks) {
-//        this.tasks = tasks;
-//    }
 }

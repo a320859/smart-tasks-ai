@@ -1,5 +1,6 @@
 package com.example.InsightEngine.controllers;
 
+import com.example.InsightEngine.dto.StatusUpdateRequest;
 import com.example.InsightEngine.dto.TaskRequest;
 import com.example.InsightEngine.model.Task;
 import com.example.InsightEngine.repository.TaskRepository;
@@ -43,6 +44,13 @@ public class TasksController {
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new RuntimeException("Task not found!"));
         task.setName(updateTask.getName());
         task.setContent(updateTask.getContent());
+        taskRepository.save(task);
+    }
+
+    @PatchMapping("/tasks/{taskId}/status")
+    public void changeStatus(@PathVariable int taskId, @RequestBody StatusUpdateRequest newStatus) {
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new RuntimeException("Task not found"));
+        task.setStatus(newStatus.getStatus());
         taskRepository.save(task);
     }
 }
