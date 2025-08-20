@@ -1,5 +1,6 @@
 package com.example.InsightEngine.model;
 
+import com.example.InsightEngine.enums.TaskStatuses;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
@@ -14,6 +15,9 @@ public class Task {
     private String name;
     private String content;
     private Timestamp createdAt;
+
+    @Enumerated(EnumType.STRING)
+    private TaskStatuses status = TaskStatuses.TODO;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -62,5 +66,13 @@ public class Task {
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public TaskStatuses getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatuses status) {
+        this.status = status;
     }
 }
