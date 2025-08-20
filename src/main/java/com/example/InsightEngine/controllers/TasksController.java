@@ -1,7 +1,9 @@
 package com.example.InsightEngine.controllers;
 
+import com.example.InsightEngine.dto.TaskRequest;
 import com.example.InsightEngine.model.Task;
 import com.example.InsightEngine.repository.TaskRepository;
+import com.example.InsightEngine.repository.UserRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -9,13 +11,20 @@ import java.util.List;
 @RestController
 public class TasksController {
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
-    public TasksController(TaskRepository taskRepository) {
+    public TasksController(TaskRepository taskRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
     }
 
+
     @PostMapping("/tasks")
-    public void addTask(@RequestBody Task task) {
+    public void addTask(@RequestBody TaskRequest taskRequest) {
+        Task task = new Task();
+        task.setUser(userRepository.findById(taskRequest.getUserId()).orElseThrow(() -> new RuntimeException("User not found")));
+        task.setName(taskRequest.getName());
+        task.setContent(taskRequest.getContent());
         taskRepository.save(task);
     }
 
