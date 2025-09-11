@@ -22,7 +22,10 @@ public class ProjectConfig {
 
     @Bean
     UserDetailsService userDetailsService(DataSource dataSource) {
-        return new JdbcUserDetailsManager(dataSource);
+        var userDetailsManager =  new JdbcUserDetailsManager(dataSource);
+        userDetailsManager.setAuthoritiesByUsernameQuery("SELECT username, authority FROM mydb.authorities WHERE username = ?");
+        userDetailsManager.setUsersByUsernameQuery("SELECT username, password, enabled FROM mydb.users WHERE username = ?");
+        return userDetailsManager;
     }
 
     @Bean
