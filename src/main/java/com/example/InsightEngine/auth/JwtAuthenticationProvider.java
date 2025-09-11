@@ -1,6 +1,6 @@
 package com.example.InsightEngine.auth;
 
-import com.example.InsightEngine.repository.UserRepository;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.util.Collections;
 
 @Component
 public class JwtAuthenticationProvider implements AuthenticationProvider {
@@ -27,7 +29,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
 
         var user = userDetailsService.loadUserByUsername(username);
         if (passwordEncoder.matches(password, user.getPassword())) {
-           return new UsernamePasswordAuthenticationToken(username, password);
+           return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
         } else {
             throw new AuthenticationException("invalid credentials") {
                 @Override
@@ -40,6 +42,6 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return BCryptPasswordEncoder.class.isAssignableFrom(authentication);
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
     }
 }
