@@ -21,4 +21,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Transactional
     @Query(nativeQuery = true, value = "INSERT INTO mydb.authorities (username, authority) VALUES (:username, 'write')")
     void addUserAuthority(@Param("username") String username);
+
+    @Query(nativeQuery = true, value = "SELECT user_id FROM mydb.users WHERE username = :username")
+    int findIdByUsername(@Param("username") String username);
 }
