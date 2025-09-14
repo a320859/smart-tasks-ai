@@ -18,10 +18,8 @@ import javax.sql.DataSource;
 @Configuration
 public class ProjectConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    public ProjectConfig(AuthenticationConfiguration authenticationConfiguration, JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public ProjectConfig(AuthenticationConfiguration authenticationConfiguration) {
         this.authenticationConfiguration = authenticationConfiguration;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
@@ -38,7 +36,7 @@ public class ProjectConfig {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         return
         httpSecurity
                 .csrf(csrf -> csrf.disable())
