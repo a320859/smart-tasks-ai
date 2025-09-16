@@ -22,12 +22,14 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final AiClient aiClient;
+    private static final Logger log = Logger.getLogger(TaskService.class.getName());
 
     @Value("${summaryPrompt}")
     String summaryPrompt;
@@ -43,22 +45,20 @@ public class TaskService {
 
     public ResponseEntity<?> addTask(TaskRequest taskRequest, UserDetails userDetails) {
         int id = userRepository.findIdByUsername(userDetails.getUsername());
-
         Part part = new Part();
         part.setText(summaryPrompt + taskRequest.getContent());
         Content content = new Content();
         content.setParts(List.of(part));
         ResumeAiDTO resumeAiDTO = new ResumeAiDTO();
         resumeAiDTO.setContents(List.of(content));
-        String text;
+        String text = null;
         try {
             String resume = aiClient.getResume(keyForModel, resumeAiDTO);
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(resume);
             text = root.at("/candidates/0/content/parts/0/text").asText(null);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body("AI service is currently unavailable. The original text will be preserved");
+            log.info("AI service error");
         }
 
         Task task = new Task();
@@ -66,7 +66,7 @@ public class TaskService {
         task.setContent(text == null ? taskRequest.getContent() : taskRequest.getContent() + "\n   " + text);
         task.setUser(userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found")));
         taskRepository.save(task);
-        return ResponseEntity.ok("Task added successfully");
+        return ResponseEntity.ok(text == null ? "Task added successfully (without AI summary)" : "Task added successfully");
     }
 
     public ResponseEntity<List<Task>> getTasks(String username) {
