@@ -1,4 +1,4 @@
-package com.example.InsightEngine.model;
+package com.example.InsightEngine.dto;
 
 import java.util.List;
 
