@@ -1,10 +1,8 @@
 package com.example.InsightEngine.dto;
 
-import com.example.InsightEngine.model.Content;
-
 import java.util.List;
 
-public class ResumeAiDTO {
+public class AiRequestDTO {
     private List<Content> contents;
 
     public List<Content> getContents() {
