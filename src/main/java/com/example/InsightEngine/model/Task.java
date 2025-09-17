@@ -4,6 +4,8 @@ import com.example.InsightEngine.enums.TaskStatuses;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "tasks")
@@ -15,6 +17,14 @@ public class Task {
     private String name;
     private String content;
     private Timestamp createdAt;
+
+    @ManyToMany
+    @JoinTable(
+            name = "task_tags",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tags> tags = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     private TaskStatuses status = TaskStatuses.TODO;
@@ -74,5 +84,13 @@ public class Task {
 
     public void setStatus(TaskStatuses status) {
         this.status = status;
+    }
+
+    public Set<Tags> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tags> tags) {
+        this.tags = tags;
     }
 }
