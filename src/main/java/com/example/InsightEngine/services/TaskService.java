@@ -2,7 +2,7 @@ package com.example.InsightEngine.services;
 
 import com.example.InsightEngine.clients.AiClient;
 import com.example.InsightEngine.dto.*;
-import com.example.InsightEngine.dto.Content;
+import com.example.InsightEngine.dto.SummarizeAndTagContent;
 import com.example.InsightEngine.model.Tags;
 import com.example.InsightEngine.model.Task;
 import com.example.InsightEngine.repository.TagsRepository;
@@ -54,8 +54,8 @@ public class TaskService {
                     .map(Tags::getName)
                     .collect(Collectors.joining());
 
-            String responseFromAi = aiClient.summarizeAndTag(keyForModel, buildRequest(Prompt + allTagsText + taskRequest.getContent()));
-            String[] extractAiResponse = extractText(responseFromAi);
+            String responseFromAi = aiClient.summarizeAndTag(keyForModel, buildSummarizeAndTagRequest(Prompt + allTagsText + taskRequest.getContent()));
+            String[] extractAiResponse = extractSummarizeAndTagText(responseFromAi);
             log.info("Tags from AI: " + extractAiResponse[1]);
             for (String tagName: extractAiResponse[1].split(",")) {
                 tagName = tagName.trim();
@@ -69,7 +69,15 @@ public class TaskService {
             }
             textResume = extractAiResponse[0];
         } catch (Exception e) {
-            log.warning("AI service error");
+            log.warning("AI summarize error");
+        }
+
+        try{
+            String embeddings = extractEmbedding(aiClient.generateEmbeddings(keyForModel, buildEmbeddingRequest(taskRequest.getContent())));
+            task.setEmbeddings(embeddings);
+            System.out.println(embeddings);
+        } catch (Exception e) {
+            log.warning("AI embeddings error");
         }
 
         task.setName(taskRequest.getName());
@@ -118,7 +126,7 @@ public class TaskService {
         }
     }
 
-    private String[] extractText(String text) throws JsonProcessingException {
+    private String[] extractSummarizeAndTagText(String text) throws JsonProcessingException {
         String[] e = new String[2];
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(text);
@@ -135,19 +143,39 @@ public class TaskService {
         return e;
     }
 
-    private AiRequestDTO buildRequest(String prompt) {
+    private SummarizeAndTagDTO buildSummarizeAndTagRequest(String prompt) {
         Part part = new Part();
         part.setText(prompt);
-        Content content = new Content();
+        SummarizeAndTagContent content = new SummarizeAndTagContent();
         content.setParts(List.of(part));
-        AiRequestDTO aiRequestDTO = new AiRequestDTO();
-        aiRequestDTO.setContents(List.of(content));
-        return aiRequestDTO;
+        SummarizeAndTagDTO summarizeAndTagDTO = new SummarizeAndTagDTO();
+        summarizeAndTagDTO.setContents(List.of(content));
+        return summarizeAndTagDTO;
     }
 
     private boolean isTaskOwner(int taskId, UserDetails userDetails) {
         int userIdFromTask = taskRepository.getUserIdByTaskId(taskId);
         int currentUserId = userRepository.findIdByUsername(userDetails.getUsername());
         return userIdFromTask == currentUserId;
+    }
+
+    private EmbeddingDTO buildEmbeddingRequest(String text) {
+        Part part = new Part();
+        part.setText(text);
+        EmbeddingContent content = new EmbeddingContent();
+        content.setParts(part);
+        EmbeddingDTO embeddingDTO = new EmbeddingDTO();
+        embeddingDTO.setContent(content);
+        embeddingDTO.setModel("models/gemini-embedding-001");
+        return embeddingDTO;
+    }
+
+    private String extractEmbedding(String embeddings) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(embeddings);
+        String text = root.at("/embedding/values").toString();
+        int start = text.indexOf("[");
+        int end = text.indexOf("]");
+        return text.substring(start + 1, end - 1);
     }
 }

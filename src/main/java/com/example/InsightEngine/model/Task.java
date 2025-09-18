@@ -17,6 +17,7 @@ public class Task {
     private String name;
     private String content;
     private Timestamp createdAt;
+    private String embeddings;
 
     @ManyToMany
     @JoinTable(
@@ -92,5 +93,13 @@ public class Task {
 
     public void setTags(Set<Tags> tags) {
         this.tags = tags;
+    }
+
+    public String getEmbeddings() {
+        return embeddings;
+    }
+
+    public void setEmbeddings(String embeddings) {
+        this.embeddings = embeddings;
     }
 }
