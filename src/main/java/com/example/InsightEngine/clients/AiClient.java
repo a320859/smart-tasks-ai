@@ -10,5 +10,5 @@ import org.springframework.web.bind.annotation.RequestHeader;
 public interface AiClient {
 
     @PostMapping("/gemini-2.5-flash:generateContent")
-    String getResume(@RequestHeader(name = "x-goog-api-key") String key, @RequestBody AiRequestDTO aiRequestDTO);
+    String summarizeAndTag(@RequestHeader(name = "x-goog-api-key") String key, @RequestBody AiRequestDTO aiRequestDTO);
 }
