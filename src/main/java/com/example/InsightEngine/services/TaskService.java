@@ -29,14 +29,11 @@ public class TaskService {
     private final AiClient aiClient;
     private static final Logger log = Logger.getLogger(TaskService.class.getName());
 
-    @Value("${summaryPrompt}")
-    String summaryPrompt;
+    @Value("${prompt}")
+    String Prompt;
 
     @Value("${keyForModel}")
     String keyForModel;
-
-    @Value("${tagsPrompt}")
-    String tagsPrompt;
 
     public TaskService(TaskRepository taskRepository, UserRepository userRepository,
                        AiClient aiClient, TagsRepository tagsRepository) {
@@ -50,14 +47,6 @@ public class TaskService {
         int id = userRepository.findIdByUsername(userDetails.getUsername());
 
         String textResume = null;
-        try {
-            String resume = aiClient.getResume(keyForModel, buildRequest(summaryPrompt + taskRequest.getContent()));
-            textResume = extractText(resume);
-        } catch (Exception e) {
-            log.info("AI service error");
-        }
-
-        String textTags = null;
         Task task = new Task();
         try {
             List<Tags> allTags = tagsRepository.getTags();
@@ -65,11 +54,10 @@ public class TaskService {
                     .map(Tags::getName)
                     .collect(Collectors.joining());
 
-            String tagsFromAi = aiClient.getResume(keyForModel, buildRequest(tagsPrompt + allTagsText + taskRequest.getContent()));
-
-            textTags = extractText(tagsFromAi);
-            log.info("Tags from AI: " + textTags);
-            for (String tagName: textTags.split(",")) {
+            String responseFromAi = aiClient.summarizeAndTag(keyForModel, buildRequest(Prompt + allTagsText + taskRequest.getContent()));
+            String[] extractAiResponse = extractText(responseFromAi);
+            log.info("Tags from AI: " + extractAiResponse[1]);
+            for (String tagName: extractAiResponse[1].split(",")) {
                 tagName = tagName.trim();
                 Tags tag = tagsRepository.getTagByName(tagName);
                 if (tag == null){
@@ -79,6 +67,7 @@ public class TaskService {
                 }
                 task.getTags().add(tag);
             }
+            textResume = extractAiResponse[0];
         } catch (Exception e) {
             log.warning("AI service error");
         }
@@ -97,9 +86,7 @@ public class TaskService {
     }
 
     public ResponseEntity<?> deleteTask(Integer taskId, UserDetails userDetails) {
-        int userId = userRepository.findIdByUsername(userDetails.getUsername());
-        int userIdFromTask = taskRepository.getUserIdByTaskId(taskId);
-        if (userIdFromTask == userId) {
+        if (isTaskOwner(taskId, userDetails)) {
             taskRepository.deleteById(taskId);
             return ResponseEntity.ok("Deletion was successful");
         } else {
@@ -108,9 +95,7 @@ public class TaskService {
     }
 
     public ResponseEntity<?> changeTask (int taskId, Task updateTask, UserDetails userDetails) {
-        int userId = userRepository.findIdByUsername(userDetails.getUsername());
-        int userIdFromTask = taskRepository.getUserIdByTaskId(taskId);
-        if (userIdFromTask == userId) {
+        if (isTaskOwner(taskId, userDetails)) {
             Task task = taskRepository.findById(taskId).orElseThrow(() -> new RuntimeException("Task not found"));
             task.setName(updateTask.getName());
             task.setContent(updateTask.getContent());
@@ -123,9 +108,7 @@ public class TaskService {
 
     public ResponseEntity<?> changeStatus(int taskId, StatusUpdateRequest statusUpdateRequest,
                                           UserDetails userDetails) {
-        int userId = userRepository.findIdByUsername(userDetails.getUsername());
-        int userIdFromTask = taskRepository.getUserIdByTaskId(taskId);
-        if (userIdFromTask == userId) {
+        if (isTaskOwner(taskId, userDetails)) {
             Task task = taskRepository.findById(taskId).orElseThrow(() -> new RuntimeException("Task not found"));
             task.setStatus(statusUpdateRequest.getStatus());
             taskRepository.save(task);
@@ -135,10 +118,21 @@ public class TaskService {
         }
     }
 
-    private String extractText(String text) throws JsonProcessingException {
+    private String[] extractText(String text) throws JsonProcessingException {
+        String[] e = new String[2];
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(text);
-        return root.at("/candidates/0/content/parts/0/text").asText(null);
+        String myText = root.at("/candidates/0/content/parts/0/text").asText(null);
+        int start = myText.indexOf("{");
+        int end = myText.indexOf("}");
+        myText = myText.substring(start, end + 1);
+        root = mapper.readTree(myText);
+
+        String summary = root.at("/summary").asText(null);
+        String tags = root.at("/tags").asText(null);
+        e[0] = summary;
+        e[1] = tags;
+        return e;
     }
 
     private AiRequestDTO buildRequest(String prompt) {
@@ -149,5 +143,11 @@ public class TaskService {
         AiRequestDTO aiRequestDTO = new AiRequestDTO();
         aiRequestDTO.setContents(List.of(content));
         return aiRequestDTO;
+    }
+
+    private boolean isTaskOwner(int taskId, UserDetails userDetails) {
+        int userIdFromTask = taskRepository.getUserIdByTaskId(taskId);
+        int currentUserId = userRepository.findIdByUsername(userDetails.getUsername());
+        return userIdFromTask == currentUserId;
     }
 }
