@@ -2,7 +2,7 @@ package com.example.InsightEngine.dto;
 
 import java.util.List;
 
-public class Content {
+public class SummarizeAndTagContent {
     List<Part> parts;
 
     public List<Part> getParts() {
