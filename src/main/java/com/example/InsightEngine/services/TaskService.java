@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -34,6 +36,12 @@ public class TaskService {
 
     @Value("${keyForModel}")
     String keyForModel;
+
+    @Value("${cosineSimilarityThreshold}")
+    double cosineSimilarityThreshold;
+
+    @Value("${embeddingModel}")
+    String embeddingModel;
 
     public TaskService(TaskRepository taskRepository, UserRepository userRepository,
                        AiClient aiClient, TagsRepository tagsRepository) {
@@ -75,7 +83,6 @@ public class TaskService {
         try{
             String embeddings = extractEmbedding(aiClient.generateEmbeddings(keyForModel, buildEmbeddingRequest(taskRequest.getContent())));
             task.setEmbeddings(embeddings);
-            System.out.println(embeddings);
         } catch (Exception e) {
             log.warning("AI embeddings error");
         }
@@ -126,6 +133,23 @@ public class TaskService {
         }
     }
 
+    public ResponseEntity<?> findTask(String text, UserDetails userDetails) {
+        try {
+            double[] requestEmbedding = parseEmbeddings(extractEmbedding(aiClient.generateEmbeddings(keyForModel, buildEmbeddingRequest(text))));
+            int userId = userRepository.findIdByUsername(userDetails.getUsername());
+            List<Task> allTasks = taskRepository.getTasksByUserId(userId);
+            List<Task> similarTask = new ArrayList<>();
+            for (Task task : allTasks) {
+                if (cosineSimilarity(requestEmbedding, parseEmbeddings(task.getEmbeddings())) > cosineSimilarityThreshold) {
+                    similarTask.add(task);
+                }
+            }
+            return ResponseEntity.ok(similarTask);
+        } catch (Exception e) {
+            return ResponseEntity.status(503).body("AI service error");
+        }
+    }
+
     private String[] extractSummarizeAndTagText(String text) throws JsonProcessingException {
         String[] e = new String[2];
         ObjectMapper mapper = new ObjectMapper();
@@ -166,7 +190,7 @@ public class TaskService {
         content.setParts(part);
         EmbeddingDTO embeddingDTO = new EmbeddingDTO();
         embeddingDTO.setContent(content);
-        embeddingDTO.setModel("models/gemini-embedding-001");
+        embeddingDTO.setModel(embeddingModel);
         return embeddingDTO;
     }
 
@@ -177,5 +201,29 @@ public class TaskService {
         int start = text.indexOf("[");
         int end = text.indexOf("]");
         return text.substring(start + 1, end - 1);
+    }
+
+    private double cosineSimilarity(double[] vectorA, double[] vectorB) {
+        if (vectorA.length != vectorB.length) {
+            throw new IllegalArgumentException("Vectors must be the same length");
+        }
+
+        double dotProduct = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
+
+        for (int i = 0; i < vectorA.length; i++) {
+            dotProduct += vectorA[i] * vectorB[i];
+            normA += Math.pow(vectorA[i], 2);
+            normB += Math.pow(vectorB[i], 2);
+        }
+
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    private double[] parseEmbeddings(String text) {
+        return Arrays.stream(text.split(","))
+                .mapToDouble(Double::parseDouble)
+                .toArray();
     }
 }

@@ -4,6 +4,7 @@ import com.example.InsightEngine.dto.StatusUpdateRequest;
 import com.example.InsightEngine.dto.TaskRequest;
 import com.example.InsightEngine.model.Task;
 import com.example.InsightEngine.services.TaskService;
+import jakarta.websocket.server.PathParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -47,5 +48,10 @@ public class TasksController {
     public ResponseEntity<?> changeStatus(@PathVariable int taskId, @RequestBody StatusUpdateRequest newStatus,
                              @AuthenticationPrincipal UserDetails userDetails) {
         return taskService.changeStatus(taskId, newStatus, userDetails);
+    }
+
+    @GetMapping("/tasks/find")
+    public ResponseEntity<?> findTasks(@PathParam("search") String search, @AuthenticationPrincipal UserDetails userDetails) {
+        return taskService.findTask(search, userDetails);
     }
 }
