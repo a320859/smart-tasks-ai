@@ -150,6 +150,11 @@ public class TaskService {
         }
     }
 
+    public ResponseEntity<List<Task>> getTasksByTagId(int tagId, UserDetails userDetails) {
+        int userId = userRepository.findIdByUsername(userDetails.getUsername());
+        return ResponseEntity.ok(taskRepository.getTasksByTagId(tagId, userId));
+    }
+
     private String[] extractSummarizeAndTagText(String text) throws JsonProcessingException {
         String[] e = new String[2];
         ObjectMapper mapper = new ObjectMapper();
@@ -200,7 +205,7 @@ public class TaskService {
         String text = root.at("/embedding/values").toString();
         int start = text.indexOf("[");
         int end = text.indexOf("]");
-        return text.substring(start + 1, end - 1);
+        return text.substring(start + 1, end);
     }
 
     private double cosineSimilarity(double[] vectorA, double[] vectorB) {
