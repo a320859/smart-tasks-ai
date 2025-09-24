@@ -2,7 +2,6 @@ package com.example.InsightEngine.model;
 
 import jakarta.persistence.*;
 
-import java.util.List;
 
 @Entity
 @Table(name = "users")
