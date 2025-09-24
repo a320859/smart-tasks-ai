@@ -2,7 +2,6 @@ package com.example.InsightEngine.model;
 
 import jakarta.persistence.*;
 
-import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -36,5 +35,13 @@ public class User {
 
     public String getPassword() {
         return password;
+    }
+
+    public void setEnabled(int enabled) {
+        this.enabled = enabled;
+    }
+
+    public int getEnabled() {
+        return enabled;
     }
 }

@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface TagsRepository extends JpaRepository<Tags, Integer> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM mydb.tags")
+    @Query(nativeQuery = true, value = "SELECT * FROM tags")
     List<Tags> getTags();
 
-    @Query(nativeQuery = true, value = "SELECT * FROM mydb.tags WHERE name = :name")
+    @Query(nativeQuery = true, value = "SELECT * FROM tags WHERE name = :name")
     Tags getTagByName(String name);
 }

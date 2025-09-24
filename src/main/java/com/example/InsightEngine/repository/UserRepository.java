@@ -9,19 +9,19 @@ import org.springframework.data.repository.query.Param;
 
 
 public interface UserRepository extends JpaRepository<User, Integer> {
-    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM mydb.users WHERE username = :username")
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM users WHERE username = :username")
     int countOfUsersWithUsername(@Param("username") String username);
 
     @Modifying
     @Transactional
-    @Query(nativeQuery = true, value = "INSERT INTO mydb.users (username, password) VALUES (:username, :password)")
+    @Query(nativeQuery = true, value = "INSERT INTO users (username, password, enabled) VALUES (:username, :password, 1)")
     void addUser(@Param("username") String username, @Param("password") String password);
 
     @Modifying
     @Transactional
-    @Query(nativeQuery = true, value = "INSERT INTO mydb.authorities (username, authority) VALUES (:username, 'write')")
+    @Query(nativeQuery = true, value = "INSERT INTO authorities (username, authority) VALUES (:username, 'write')")
     void addUserAuthority(@Param("username") String username);
 
-    @Query(nativeQuery = true, value = "SELECT user_id FROM mydb.users WHERE username = :username")
+    @Query(nativeQuery = true, value = "SELECT user_id FROM users WHERE username = :username")
     int findIdByUsername(@Param("username") String username);
 }

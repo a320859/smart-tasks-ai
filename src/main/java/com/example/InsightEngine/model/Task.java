@@ -1,6 +1,7 @@
 package com.example.InsightEngine.model;
 
 import com.example.InsightEngine.enums.TaskStatuses;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
@@ -15,8 +16,10 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int taskId;
     private String name;
+    @Lob
     private String content;
     private Timestamp createdAt;
+    @Lob
     private String embeddings;
 
     @ManyToMany
@@ -32,6 +35,7 @@ public class Task {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"password"})
     private User user;
 
     @PrePersist

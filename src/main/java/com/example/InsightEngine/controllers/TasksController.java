@@ -54,4 +54,9 @@ public class TasksController {
     public ResponseEntity<?> findTasks(@PathParam("search") String search, @AuthenticationPrincipal UserDetails userDetails) {
         return taskService.findTask(search, userDetails);
     }
+
+    @GetMapping("/tags/{tagId}/tasks")
+    public ResponseEntity<?> getTasksByTagId(@PathVariable int tagId, @AuthenticationPrincipal UserDetails userDetails) {
+        return taskService.getTasksByTagId(tagId, userDetails);
+    }
 }
